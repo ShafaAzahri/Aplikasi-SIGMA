@@ -3,7 +3,8 @@ import 'package:latihan/user/screens/home_page.dart';
 import 'package:latihan/user/screens/profile_page.dart';
 import 'package:latihan/user/screens/ukm_list.dart';
 
-void navigateWithAnimation(BuildContext context, String routeName, int currentIndex) {
+void navigateWithAnimation(
+    BuildContext context, String routeName, int currentIndex) {
   Navigator.of(context).pushReplacement(PageRouteBuilder(
     pageBuilder: (context, animation, secondaryAnimation) {
       return getPageByRoute(routeName);
@@ -18,7 +19,6 @@ void navigateWithAnimation(BuildContext context, String routeName, int currentIn
   ));
 }
 
-
 Widget getPageByRoute(String routeName) {
   switch (routeName) {
     case '/beranda':
@@ -32,7 +32,8 @@ Widget getPageByRoute(String routeName) {
   }
 }
 
-Widget buildBottomNavBar(int currentIndex, BuildContext context, Function(int) onItemTapped) {
+Widget buildBottomNavBar(
+    int currentIndex, BuildContext context, Function(int) onItemTapped) {
   return BottomNavigationBar(
     currentIndex: currentIndex,
     items: const <BottomNavigationBarItem>[
@@ -49,12 +50,18 @@ Widget buildBottomNavBar(int currentIndex, BuildContext context, Function(int) o
         label: 'Profil',
       ),
     ],
+    selectedItemColor: const Color.fromARGB(255, 22, 29, 111),
+    unselectedItemColor: const Color.fromARGB(255, 22, 29, 111),
+    backgroundColor: const Color.fromARGB(255, 255, 252, 230),
+    type: BottomNavigationBarType.fixed,
+    elevation: 8,
     onTap: (index) {
       // Mengatur navigasi sesuai dengan item yang dipilih
       if (index == 0) {
         navigateWithAnimation(context, '/beranda', index);
       } else if (index == 1) {
-        navigateWithAnimation(context, '/ukm_list', index); // Animasi untuk ListUKM
+        navigateWithAnimation(
+            context, '/ukm_list', index); // Animasi untuk ListUKM
       } else if (index == 2) {
         navigateWithAnimation(context, '/profile', index);
       }

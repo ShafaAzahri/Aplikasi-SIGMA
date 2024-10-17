@@ -8,14 +8,42 @@ class ListUKM extends StatefulWidget {
 
 class _ListUKMState extends State<ListUKM> {
   final List<Map<String, String>> ukms = [
-    {'name': 'PMC', 'fullName': 'Perkumpulan Musang Cebol', 'image': 'assets/1.jpg'},
-    {'name': 'PP', 'fullName': 'Persatuan Pecinta Panu', 'image': 'assets/1.jpg'},
-    {'name': 'PMBF', 'fullName': 'Perkumpulan Mancing Bareng Feses', 'image': 'assets/1.jpg'},
-    {'name': 'KMPP', 'fullName': 'Komunitas Mahasiswa Pencinta Paha', 'image': 'assets/1.jpg'},
-    {'name': 'PACO', 'fullName': 'Perkumpulan Anak Cinta Otot', 'image': 'assets/1.jpg'},
-    {'name': 'PKTK', 'fullName': 'Politeknik Kaki Tiga Klub', 'image': 'assets/1.jpg'},
+    {
+      'name': 'PMC',
+      'fullName': 'Perkumpulan Musang Cebol',
+      'image': 'assets/1.jpg'
+    },
+    {
+      'name': 'PP',
+      'fullName': 'Persatuan Pecinta Panu',
+      'image': 'assets/1.jpg'
+    },
+    {
+      'name': 'PMBF',
+      'fullName': 'Perkumpulan Mancing Bareng Feses',
+      'image': 'assets/1.jpg'
+    },
+    {
+      'name': 'KMPP',
+      'fullName': 'Komunitas Mahasiswa Pencinta Paha',
+      'image': 'assets/1.jpg'
+    },
+    {
+      'name': 'PACO',
+      'fullName': 'Perkumpulan Anak Cinta Otot',
+      'image': 'assets/1.jpg'
+    },
+    {
+      'name': 'PKTK',
+      'fullName': 'Politeknik Kaki Tiga Klub',
+      'image': 'assets/1.jpg'
+    },
     {'name': 'PFK', 'fullName': 'Polban Fans Kentut', 'image': 'assets/1.jpg'},
-    {'name': 'PMK', 'fullName': 'Persekutuan Mahasiswa Kolor', 'image': 'assets/1.jpg'}
+    {
+      'name': 'PMK',
+      'fullName': 'Persekutuan Mahasiswa Kolor',
+      'image': 'assets/1.jpg'
+    }
   ];
 
   int _selectedIndex = 1;
@@ -27,10 +55,10 @@ class _ListUKMState extends State<ListUKM> {
 
     switch (index) {
       case 0:
-        navigateWithAnimation(context, '/home', index);
+        navigateWithAnimation(context, '/beranda', index);
         break;
       case 1:
-      // Sudah di halaman UKM
+        // Sudah di halaman UKM
         break;
       case 2:
         navigateWithAnimation(context, '/profile', index);
@@ -48,6 +76,7 @@ class _ListUKMState extends State<ListUKM> {
       appBar: AppBar(
         title: Text('Daftar UKM'),
         automaticallyImplyLeading: false,
+        backgroundColor: const Color.fromARGB(255, 255, 251, 214),
       ),
       body: LayoutBuilder(
         builder: (context, constraints) {
@@ -88,10 +117,12 @@ class _ListUKMState extends State<ListUKM> {
                         Expanded(
                           child: Container(
                             decoration: BoxDecoration(
-                              borderRadius: BorderRadius.vertical(top: Radius.circular(15)),
+                              borderRadius: BorderRadius.vertical(
+                                  top: Radius.circular(15)),
                             ),
                             child: ClipRRect(
-                              borderRadius: BorderRadius.vertical(top: Radius.circular(15)),
+                              borderRadius: BorderRadius.vertical(
+                                  top: Radius.circular(15)),
                               child: Image.asset(
                                 ukms[index]['image']!,
                                 fit: BoxFit.cover,
@@ -144,25 +175,8 @@ class _ListUKMState extends State<ListUKM> {
           );
         },
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Beranda',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.group),
-            label: 'UKM',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.account_circle),
-            label: 'Profil',
-          ),
-        ],
-        currentIndex: _selectedIndex,
-        selectedItemColor: Colors.blue,
-        onTap: _onItemTapped,
-      ),
+      bottomNavigationBar:
+          buildBottomNavBar(_selectedIndex, context, _onItemTapped),
     );
   }
 }

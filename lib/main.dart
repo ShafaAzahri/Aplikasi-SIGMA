@@ -5,7 +5,7 @@ import 'package:latihan/user/screens/ukm_list.dart';
 import 'package:latihan/user/screens/login_page.dart';
 import 'package:latihan/user/screens/Ukm_Detail_notRegister.dart';
 import 'package:latihan/user/screens/pengumaman.dart';
-import 'package:latihan/user/screens/ukm_detail_registered.dart';
+import 'package:latihan/user/screens/ukm_detail_registered.dart'; // Pastikan ini diimpor
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -21,15 +21,25 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.blue,
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      initialRoute: '/login', // Menggunakan penamaan rute yang lebih deskriptif
+      initialRoute: '/login',
       routes: {
-        '/login' : (context) => LoginPage(),
+        '/login': (context) => LoginPage(),
         '/beranda': (context) => HomePage(),
         '/ukm_list': (context) => ListUKM(),
         '/profile': (context) => ProfilePage(),
-        '/ukm_detail': (context) => UKMDetail(), // Halaman detail UKM
-        '/pengumuman' : (context) => PengumumanPage(),
-        '/menu_ukm_terdaftar' : (context) => UKMDetailTerdaftar(),
+        '/ukm_detail': (context) => UKMDetail_notRegister(),
+        '/pengumuman': (context) => PengumumanPage(),
+      },
+      onGenerateRoute: (settings) {
+        if (settings.name == '/ukm_detail_registered') {
+          final args = settings.arguments as String;
+          return MaterialPageRoute(
+            builder: (context) {
+              return UKMDetailRegisteredPage(ukmName: args);
+            },
+          );
+        }
+        return null;
       },
     );
   }

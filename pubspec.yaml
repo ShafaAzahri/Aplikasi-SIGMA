@@ -30,6 +30,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_pdfview: ^1.2.1
+  path_provider: ^2.0.11
 
 
   # The following adds the Cupertino Icons font to your application.
@@ -71,6 +73,8 @@ flutter:
     - assets/boker.jpg
     - assets/mancing.jpeg
     - assets/1.jpg
+    - assets/rapat1.pdf
+    - assets/2.jpg
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

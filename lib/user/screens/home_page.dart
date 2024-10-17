@@ -15,9 +15,21 @@ class _HomePageState extends State<HomePage> {
 
   // Dummy data untuk UKM yang diikuti
   final List<Map<String, dynamic>> ukmDiikuti = [
-    {'nama': 'PMC', 'deskripsi': 'Perkumpulan Musang Cebol', 'image': 'assets/1.jpg'},
-    {'nama': 'PP', 'deskripsi': 'Persatuan Pecinta Panu', 'image': 'assets/1.jpg'},
-    {'nama': 'PMBF', 'deskripsi': 'Perkumpulan Mancing Bareng Feses', 'image': 'assets/1.jpg'},
+    {
+      'nama': 'PMC',
+      'deskripsi': 'Perkumpulan Musang Cebol',
+      'image': 'assets/2.jpg'
+    },
+    {
+      'nama': 'PP',
+      'deskripsi': 'Persatuan Pecinta Panu',
+      'image': 'assets/2.jpg'
+    },
+    {
+      'nama': 'PMBF',
+      'deskripsi': 'Perkumpulan Mancing Bareng Feses',
+      'image': 'assets/2.jpg'
+    },
   ];
 
   @override
@@ -45,7 +57,10 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('SIGMA - Mahasiswa'),
+        title: Text('SIGMA - Mahasiswa',
+            style: TextStyle(color: const Color.fromARGB(255, 22, 29, 111))),
+        backgroundColor: const Color.fromARGB(255, 255, 252, 230),
+        iconTheme: IconThemeData(color: Colors.black),
         actions: [
           IconButton(
             icon: Icon(Icons.notifications),
@@ -69,7 +84,8 @@ class _HomePageState extends State<HomePage> {
           ],
         ),
       ),
-      bottomNavigationBar: buildBottomNavBar(_currentIndex, context, onItemTapped),
+      bottomNavigationBar:
+          buildBottomNavBar(_currentIndex, context, onItemTapped),
     );
   }
 
@@ -172,7 +188,11 @@ class _HomePageState extends State<HomePage> {
           padding: const EdgeInsets.symmetric(horizontal: 16.0),
           child: Text(
             'UKM yang Diikuti',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF161D6F),
+            ),
           ),
         ),
         SizedBox(height: 10),
@@ -182,42 +202,57 @@ class _HomePageState extends State<HomePage> {
             scrollDirection: Axis.horizontal,
             itemCount: ukmDiikuti.length,
             itemBuilder: (context, index) {
-              return Card(
-                margin: EdgeInsets.only(left: 16, right: index == ukmDiikuti.length - 1 ? 16 : 0),
-                child: Container(
-                  width: 200,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        height: 80,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.vertical(top: Radius.circular(10)),
-                          image: DecorationImage(
-                            image: AssetImage(ukmDiikuti[index]['image']),
-                            fit: BoxFit.cover,
+              return GestureDetector(
+                onTap: () {
+                  Navigator.pushNamed(
+                    context,
+                    '/ukm_detail_registered',
+                    arguments: ukmDiikuti[index]['nama'],
+                  );
+                },
+                child: Card(
+                  margin: EdgeInsets.only(
+                      left: 16, right: index == ukmDiikuti.length - 1 ? 16 : 0),
+                  child: Container(
+                    width: 200,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          height: 80,
+                          decoration: BoxDecoration(
+                            borderRadius:
+                                BorderRadius.vertical(top: Radius.circular(10)),
+                            image: DecorationImage(
+                              image: AssetImage(ukmDiikuti[index]['image']),
+                              fit: BoxFit.cover,
+                            ),
                           ),
                         ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              ukmDiikuti[index]['nama'],
-                              style: TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                            SizedBox(height: 4),
-                            Text(
-                              ukmDiikuti[index]['deskripsi'],
-                              overflow: TextOverflow.ellipsis,
-                              maxLines: 2,
-                            ),
-                          ],
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                ukmDiikuti[index]['nama'],
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.normal,
+                                  color: Color(0xFF161D6F),
+                                ),
+                              ),
+                              SizedBox(height: 4),
+                              Text(
+                                ukmDiikuti[index]['deskripsi'],
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 2,
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               );
@@ -240,7 +275,10 @@ class _HomePageState extends State<HomePage> {
           padding: const EdgeInsets.symmetric(horizontal: 16.0),
           child: Text(
             'UKM Rekomendasi',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF161D6F)),
           ),
         ),
         SizedBox(height: 10),
@@ -252,10 +290,13 @@ class _HomePageState extends State<HomePage> {
             itemBuilder: (context, index) {
               return GestureDetector(
                 onTap: () {
-                  _navigateToDetail(ukmDiikuti[index]['nama']);
+                  _navigateToDetail(
+                    ukmDiikuti[index]['nama'],
+                  );
                 },
                 child: Card(
-                  margin: EdgeInsets.only(left: 16, right: index == ukmDiikuti.length - 1 ? 16 : 0),
+                  margin: EdgeInsets.only(
+                      left: 16, right: index == ukmDiikuti.length - 1 ? 16 : 0),
                   child: Container(
                     width: 200,
                     child: Column(
@@ -264,7 +305,8 @@ class _HomePageState extends State<HomePage> {
                         Container(
                           height: 80,
                           decoration: BoxDecoration(
-                            borderRadius: BorderRadius.vertical(top: Radius.circular(10)),
+                            borderRadius:
+                                BorderRadius.vertical(top: Radius.circular(10)),
                             image: DecorationImage(
                               image: AssetImage(ukmDiikuti[index]['image']),
                               fit: BoxFit.cover,
@@ -278,7 +320,9 @@ class _HomePageState extends State<HomePage> {
                             children: [
                               Text(
                                 ukmDiikuti[index]['nama'],
-                                style: TextStyle(fontWeight: FontWeight.bold),
+                                style: TextStyle(
+                                    fontWeight: FontWeight.normal,
+                                    color: Color(0xFF161D6F)),
                               ),
                               SizedBox(height: 4),
                               Text(

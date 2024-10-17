@@ -2,38 +2,38 @@ import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:latihan/user/screens/pendaftaran.dart';
 
-class UKMDetail extends StatefulWidget {
+class UKMDetail_notRegister extends StatefulWidget {
   @override
   _UKMDetailState createState() => _UKMDetailState();
 }
 
-class _UKMDetailState extends State<UKMDetail> {
+class _UKMDetailState extends State<UKMDetail_notRegister> {
   bool showVisi = true;
   bool showStruktur = true;
 
   // Dummy data untuk galeri
   final List<Map<String, String>> galleryItems = [
+    {"image": "assets/mancing.jpeg", "description": "Kegiatan Mancing Perkara"},
     {
-      "image": "assets/mancing.jpeg",
-      "description": "Kegiatan Mancing Perkara"
+      "image": "assets/boker.jpg",
+      "description":
+          "Kegiatan membuang kuning kuning di perut ahdiashdaiudhaidhaiduahisduahsiduahiudahiduahiduasd"
     },
-    {"image": "assets/boker.jpg",
-      "description": "Kegiatan membuang kuning kuning di perut ahdiashdaiudhaidhaiduahisduahsiduahiudahiduahiduasd"},
-    {"image": "assets/1.jpg",
-      "description": "Kegiatan membuang kuning kuning di perut ahdiashdaiudhaidhaiduahisduahsiduahiudahiduahiduasd"},
+    {
+      "image": "assets/1.jpg",
+      "description":
+          "Kegiatan membuang kuning kuning di perut ahdiashdaiudhaidhaiduahisduahsiduahiudahiduahiduasd"
+    },
   ];
 
   @override
   Widget build(BuildContext context) {
-    final String ukmName = ModalRoute
-        .of(context)
-        ?.settings
-        .arguments as String;
+    final String ukmName = ModalRoute.of(context)?.settings.arguments as String;
 
     return Scaffold(
       appBar: AppBar(
         title: Text(ukmName),
-        backgroundColor: Color(0xFF1E1D67),
+        backgroundColor: Color.fromARGB(255, 247, 236, 197),
       ),
       body: CustomScrollView(
         slivers: [
@@ -50,9 +50,11 @@ class _UKMDetailState extends State<UKMDetail> {
                       child: Container(
                         color: showVisi ? Color(0xFFFFF5E6) : Colors.white,
                         child: Center(
-                          child: Text('Visi', style: TextStyle(fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black)),
+                          child: Text('Visi',
+                              style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black)),
                         ),
                       ),
                     ),
@@ -63,9 +65,11 @@ class _UKMDetailState extends State<UKMDetail> {
                       child: Container(
                         color: !showVisi ? Color(0xFFFFF5E6) : Colors.white,
                         child: Center(
-                          child: Text('Misi', style: TextStyle(fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black)),
+                          child: Text('Misi',
+                              style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black)),
                         ),
                       ),
                     ),
@@ -92,10 +96,11 @@ class _UKMDetailState extends State<UKMDetail> {
                       child: Container(
                         color: showStruktur ? Color(0xFFFFF5E6) : Colors.white,
                         child: Center(
-                          child: Text('Struktur Organisasi', style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black)),
+                          child: Text('Struktur Organisasi',
+                              style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black)),
                         ),
                       ),
                     ),
@@ -106,9 +111,11 @@ class _UKMDetailState extends State<UKMDetail> {
                       child: Container(
                         color: !showStruktur ? Color(0xFFFFF5E6) : Colors.white,
                         child: Center(
-                          child: Text('Galeri', style: TextStyle(fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black)),
+                          child: Text('Galeri',
+                              style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black)),
                         ),
                       ),
                     ),
@@ -121,9 +128,8 @@ class _UKMDetailState extends State<UKMDetail> {
             child: Container(
               color: Color(0xFFFFF5E6),
               padding: EdgeInsets.all(16),
-              child: showStruktur
-                  ? buildStructureOrganization()
-                  : buildGallery(),
+              child:
+                  showStruktur ? buildStructureOrganization() : buildGallery(),
             ),
           ),
           SliverToBoxAdapter(child: SizedBox(height: 16)),
@@ -234,7 +240,6 @@ class _UKMDetailState extends State<UKMDetail> {
     );
   }
 
-
   Widget _buildVisiContent() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -251,8 +256,8 @@ class _UKMDetailState extends State<UKMDetail> {
         SizedBox(height: 20),
         Text(
           'Solid /so·lid/ a 1 kuat; kukuh; berbobot 2 padat; berisi. '
-              'Organisasi yang solid adalah organisasi yang memiliki kesepahaman dalam pemikiran, keterikatan, perasaan, dan tindakan nyata untuk mencapai tujuan. '
-              'Hal ini diperlukan dapat terwujud ketika memiliki tim kerja yang mengerti dan disiplin pada tanggung jawabnya masing-masing...',
+          'Organisasi yang solid adalah organisasi yang memiliki kesepahaman dalam pemikiran, keterikatan, perasaan, dan tindakan nyata untuk mencapai tujuan. '
+          'Hal ini diperlukan dapat terwujud ketika memiliki tim kerja yang mengerti dan disiplin pada tanggung jawabnya masing-masing...',
           style: TextStyle(
             fontSize: 14,
             color: Colors.black,
@@ -335,10 +340,12 @@ class _UKMDetailState extends State<UKMDetail> {
                       width: 100,
                       decoration: BoxDecoration(
                         image: DecorationImage(
-                          image: AssetImage('assets/1.jpg'), // Ganti dengan nama gambar Anda
+                          image: AssetImage(
+                              'assets/1.jpg'), // Ganti dengan nama gambar Anda
                           fit: BoxFit.cover,
                         ),
-                        borderRadius: BorderRadius.circular(8), // Untuk memberikan sudut yang melengkung
+                        borderRadius: BorderRadius.circular(
+                            8), // Untuk memberikan sudut yang melengkung
                       ),
                     ),
                     SizedBox(height: 8),
@@ -365,10 +372,12 @@ class _UKMDetailState extends State<UKMDetail> {
                       width: 100,
                       decoration: BoxDecoration(
                         image: DecorationImage(
-                          image: AssetImage('assets/boker.jpg'), // Ganti dengan nama gambar Anda
+                          image: AssetImage(
+                              'assets/boker.jpg'), // Ganti dengan nama gambar Anda
                           fit: BoxFit.cover,
                         ),
-                        borderRadius: BorderRadius.circular(8), // Untuk memberikan sudut yang melengkung
+                        borderRadius: BorderRadius.circular(
+                            8), // Untuk memberikan sudut yang melengkung
                       ),
                     ),
                     SizedBox(height: 8),
@@ -391,7 +400,6 @@ class _UKMDetailState extends State<UKMDetail> {
       ),
     );
   }
-
 
   Widget buildRegistrationSection() {
     return Padding(
