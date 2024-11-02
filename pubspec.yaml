@@ -42,6 +42,8 @@ dependencies:
   gif: ^2.3.0
   animated_splash_screen: ^1.3.0
   lottie: ^3.1.3
+  http: ^1.2.2
+  shared_preferences: ^2.3.2
 
 dev_dependencies:
   flutter_test:

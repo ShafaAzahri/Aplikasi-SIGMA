@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:latihan/service/api_login.dart';
+import 'dart:convert';
 
 class LoginPage extends StatefulWidget {
   @override
@@ -7,6 +10,50 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   bool _isPasswordVisible = false;
+  bool _isLoading = false;
+  final _usernameController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _apiService = ApiService();
+
+  Future<void> _handleLogin() async {
+    setState(() => _isLoading = true);
+
+    try {
+      final response = await _apiService.login(
+        _usernameController.text,
+        _passwordController.text,
+      );
+
+      if (response['status'] == 'success') {
+        // Simpan data user
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('user_data', json.encode(response['user']));
+
+        // Navigate ke beranda
+        Navigator.pushNamedAndRemoveUntil(
+          context,
+          '/beranda',
+              (route) => false,
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(response['message'] ?? 'Login gagal'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Terjadi kesalahan pada server'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -37,6 +84,7 @@ class _LoginPageState extends State<LoginPage> {
                       child: Padding(
                         padding: EdgeInsets.symmetric(horizontal: 20.0),
                         child: TextField(
+                          controller: _usernameController,
                           decoration: InputDecoration(
                             labelText: 'Username',
                             border: OutlineInputBorder(
@@ -51,6 +99,7 @@ class _LoginPageState extends State<LoginPage> {
                       child: Padding(
                         padding: EdgeInsets.symmetric(horizontal: 20.0),
                         child: TextField(
+                          controller: _passwordController,
                           obscureText: !_isPasswordVisible,
                           decoration: InputDecoration(
                             labelText: 'Password',
@@ -77,10 +126,7 @@ class _LoginPageState extends State<LoginPage> {
                     Padding(
                       padding: EdgeInsets.symmetric(horizontal: 20.0),
                       child: ElevatedButton(
-                        onPressed: () {
-                          Navigator.pushNamedAndRemoveUntil(
-                              context, '/beranda', (route) => false);
-                        },
+                        onPressed: _isLoading ? null : _handleLogin,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.grey,
                           foregroundColor: Colors.white,
@@ -89,7 +135,16 @@ class _LoginPageState extends State<LoginPage> {
                           ),
                           minimumSize: Size(double.infinity, 50),
                         ),
-                        child: Text('Login'),
+                        child: _isLoading
+                            ? SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                            : Text('Login'),
                       ),
                     ),
                   ],
@@ -100,5 +155,12 @@ class _LoginPageState extends State<LoginPage> {
         },
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _usernameController.dispose();
+    _passwordController.dispose();
+    super.dispose();
   }
 }
