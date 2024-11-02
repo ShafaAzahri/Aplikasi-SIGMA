@@ -222,33 +222,39 @@ class _HomePageState extends State<HomePage> {
                           height: 80,
                           decoration: BoxDecoration(
                             borderRadius:
-                                BorderRadius.vertical(top: Radius.circular(10)),
+                            BorderRadius.vertical(top: Radius.circular(10)),
                             image: DecorationImage(
                               image: AssetImage(ukmDiikuti[index]['image']),
                               fit: BoxFit.cover,
                             ),
                           ),
                         ),
-                        Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                ukmDiikuti[index]['nama'],
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.normal,
-                                  color: Color(0xFF161D6F),
+                        Expanded(  // Tambahkan Expanded di sini
+                          child: Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,  // Tambahkan ini
+                              children: [
+                                Text(
+                                  ukmDiikuti[index]['nama'],
+                                  style: TextStyle(
+                                    fontSize: 16,  // Kurangi ukuran font
+                                    fontWeight: FontWeight.normal,
+                                    color: Color(0xFF161D6F),
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
-                              ),
-                              SizedBox(height: 4),
-                              Text(
-                                ukmDiikuti[index]['deskripsi'],
-                                overflow: TextOverflow.ellipsis,
-                                maxLines: 2,
-                              ),
-                            ],
+                                SizedBox(height: 4),
+                                Text(
+                                  ukmDiikuti[index]['deskripsi'],
+                                  style: TextStyle(fontSize: 12),  // Kurangi ukuran font
+                                  overflow: TextOverflow.ellipsis,
+                                  maxLines: 2,
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ],
@@ -305,32 +311,39 @@ class _HomePageState extends State<HomePage> {
                         Container(
                           height: 80,
                           decoration: BoxDecoration(
-                            borderRadius:
-                                BorderRadius.vertical(top: Radius.circular(10)),
+                            borderRadius: BorderRadius.vertical(top: Radius.circular(10)),
                             image: DecorationImage(
                               image: AssetImage(ukmDiikuti[index]['image']),
                               fit: BoxFit.cover,
                             ),
                           ),
                         ),
-                        Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                ukmDiikuti[index]['nama'],
-                                style: TextStyle(
+                        Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  ukmDiikuti[index]['nama'],
+                                  style: TextStyle(
+                                    fontSize: 16,
                                     fontWeight: FontWeight.normal,
-                                    color: Color(0xFF161D6F)),
-                              ),
-                              SizedBox(height: 4),
-                              Text(
-                                ukmDiikuti[index]['deskripsi'],
-                                overflow: TextOverflow.ellipsis,
-                                maxLines: 2,
-                              ),
-                            ],
+                                    color: Color(0xFF161D6F),
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                SizedBox(height: 4),
+                                Text(
+                                  ukmDiikuti[index]['deskripsi'],
+                                  style: TextStyle(fontSize: 12),
+                                  overflow: TextOverflow.ellipsis,
+                                  maxLines: 2,
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ],
@@ -341,6 +354,7 @@ class _HomePageState extends State<HomePage> {
             },
           ),
         ),
+        // Jangan lupa tambahkan bagian "Lihat Lebih Banyak" di sini
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16.0),
           child: Row(
@@ -348,7 +362,7 @@ class _HomePageState extends State<HomePage> {
             children: [
               TextButton(
                 onPressed: () {
-                  Navigator.pushNamed(context, '/ukm_list');
+                  Navigator.pushReplacementNamed(context, '/ukm_list');
                 },
                 child: Text(
                   'Lihat Lebih Banyak',

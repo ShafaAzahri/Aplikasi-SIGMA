@@ -39,6 +39,9 @@ dependencies:
   cupertino_icons: ^1.0.8
   carousel_slider: ^5.0.0
   image_picker: ^1.1.2
+  gif: ^2.3.0
+  animated_splash_screen: ^1.3.0
+  lottie: ^3.1.3
 
 dev_dependencies:
   flutter_test:
@@ -75,6 +78,7 @@ flutter:
     - assets/1.jpg
     - assets/rapat1.pdf
     - assets/2.jpg
+    - assets/loading.gif
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
