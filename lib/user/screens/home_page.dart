@@ -1,6 +1,11 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:latihan/service/api_url.dart';
 import 'package:latihan/user/util/navbar_function.dart';
+import 'package:latihan/service/ukm.dart';
+import 'package:latihan/models/ukm.dart';
+import 'package:latihan/models/timeline_model.dart';
+import 'package:latihan/service/timeline_service.dart';
 
 class HomePage extends StatefulWidget {
   @override
@@ -8,137 +13,87 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  final PageController _pageController = PageController(initialPage: 1000);
-  int _currentPage = 1000;
-  int _currentIndex = 0;
+  final PageController _pageController = PageController();
+  final UkmService _ukmService = UkmService();
+  final TimelineService _timelineService = TimelineService();
+  late Future<List<TimelineModel>> _timelinesFuture;
   Timer? _timer;
+  int _currentIndex = 0;
+  ValueNotifier<int> _currentPage = ValueNotifier<int>(0);
 
-  // Dummy data untuk UKM yang diikuti
-  final List<Map<String, dynamic>> ukmDiikuti = [
-    {
-      'nama': 'PMC',
-      'deskripsi': 'Perkumpulan Musang Cebol',
-      'image': 'assets/2.jpg'
-    },
-    {
-      'nama': 'PP',
-      'deskripsi': 'Persatuan Pecinta Panu',
-      'image': 'assets/2.jpg'
-    },
-    {
-      'nama': 'PMBF',
-      'deskripsi': 'Perkumpulan Mancing Bareng Feses',
-      'image': 'assets/2.jpg'
-    },
-  ];
+  // Colors
+  static const Color primaryColor = Color(0xFFFFF8DC); // Cream
+  static const Color secondaryColor = Color(0xFFDEB887); // BurlyWood
+  static const Color accentColor = Color(0xFF8B4513); // Saddle Brown
+  static const Color textColor = Color(0xFF4A4A4A); // Dark Gray
 
   @override
   void initState() {
     super.initState();
-
-    _timer = Timer.periodic(Duration(seconds: 5), (Timer timer) {
-      _currentPage++;
-      _pageController.animateToPage(
-        _currentPage,
-        duration: Duration(milliseconds: 500),
-        curve: Curves.ease,
-      );
-    });
-  }
-
-  @override
-  void dispose() {
-    _timer?.cancel();
-    _pageController.dispose();
-    super.dispose();
+    _timelinesFuture = _timelineService.getTimelines();
+    _startImageSlider();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('SIGMA - Mahasiswa',
-            style: TextStyle(color: const Color.fromARGB(255, 22, 29, 111))),
-        backgroundColor: const Color.fromARGB(255, 255, 252, 230),
-        iconTheme: IconThemeData(color: Colors.black),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.notifications),
-            onPressed: () {
-              Navigator.pushNamed(context, '/pengumuman');
-            },
+      backgroundColor: primaryColor,
+      appBar: _buildAppBar(),
+      body: RefreshIndicator(
+        color: accentColor,
+        onRefresh: () async {
+          setState(() {
+            _timelinesFuture = _timelineService.getTimelines();
+          });
+        },
+        child: SingleChildScrollView(
+          physics: AlwaysScrollableScrollPhysics(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildTimelineSlider(),
+              SizedBox(height: 24),
+              _buildWelcomeSection(),
+              SizedBox(height: 24),
+              _buildUKMDiikutiSection(),
+              SizedBox(height: 24),
+              _buildUKMRekomendasiSection(),
+              SizedBox(height: 24),
+            ],
           ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            _buildImageSlider(),
-            SizedBox(height: 20),
-            _buildWelcomeSection(),
-            SizedBox(height: 20),
-            _buildUKMDiikutiList(),
-            SizedBox(height: 20),
-            _buildUKMRekomendasiSection(),
-          ],
         ),
       ),
-      bottomNavigationBar:
-          buildBottomNavBar(_currentIndex, context, onItemTapped),
+      bottomNavigationBar: Theme(
+        data: Theme.of(context).copyWith(
+          canvasColor: primaryColor,
+        ),
+        child: buildBottomNavBar(_currentIndex, context, _onItemTapped),
+      ),
     );
   }
 
-  Widget _buildImageSlider() {
-    return Stack(
-      children: [
-        Container(
-          height: 200,
-          child: PageView.builder(
-            controller: _pageController,
-            itemBuilder: (context, index) {
-              int currentIndex = index % 3;
-              return Stack(
-                children: [
-                  Image.asset(
-                    'assets/1.jpg',
-                    fit: BoxFit.cover,
-                    width: double.infinity,
-                  ),
-                  Positioned.fill(
-                    child: Align(
-                      alignment: Alignment.bottomCenter,
-                      child: Container(
-                        height: 50,
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: [
-                              Colors.transparent,
-                              Colors.white.withOpacity(0.5),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              );
-            },
-          ),
+  AppBar _buildAppBar() {
+    return AppBar(
+      elevation: 0,
+      backgroundColor: primaryColor,
+      title: Text(
+        'Beranda',
+        style: TextStyle(
+          color: accentColor,
+          fontSize: 24,
+          fontWeight: FontWeight.bold,
         ),
-        Positioned(
-          bottom: 10,
-          left: 0,
-          right: 0,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: <Widget>[
-              _buildIndicator(0),
-              _buildIndicator(1),
-              _buildIndicator(2),
-            ],
+      ),
+      actions: [
+        Container(
+          margin: EdgeInsets.only(right: 8),
+          decoration: BoxDecoration(
+            color: secondaryColor.withOpacity(0.2),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: IconButton(
+            icon: Icon(Icons.notifications_none_rounded, color: accentColor),
+            onPressed: () => Navigator.pushNamed(context, '/pengumuman'),
           ),
         ),
       ],
@@ -146,30 +101,371 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildWelcomeSection() {
-    return Card(
-      elevation: 4,
+    return Container(
       margin: EdgeInsets.symmetric(horizontal: 16),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: Offset(0, 4),
+          ),
+        ],
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Row(
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          padding: EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            border: Border(
+              left: BorderSide(color: secondaryColor, width: 4),
+            ),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: secondaryColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  Icons.school_rounded,
+                  color: accentColor,
+                  size: 32,
+                ),
+              ),
+              SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Selamat Datang di SIGMA!',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: accentColor,
+                      ),
+                    ),
+                    SizedBox(height: 4),
+                    Text(
+                      'Jelajahi aktivitas kampus dan bergabunglah dalam berbagai kegiatan seru!',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: textColor,
+                        height: 1.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTimelineSlider() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Container(
+            height: 200,
+            child: FutureBuilder<List<TimelineModel>>(
+              future: _timelinesFuture,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return Center(
+                    child: CircularProgressIndicator(color: accentColor),
+                  );
+                }
+
+                if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  return Center(
+                    child: Text(
+                      'Tidak ada timeline tersedia',
+                      style: TextStyle(color: textColor),
+                    ),
+                  );
+                }
+
+                return PageView.builder(
+                  controller: _pageController,
+                  onPageChanged: (index) => _currentPage.value = index,
+                  itemCount: snapshot.data!.length,
+                  itemBuilder: (context, index) {
+                    final timeline = snapshot.data![index];
+                    return _buildTimelineItem(timeline);
+                  },
+                );
+              },
+            ),
+          ),
+          SizedBox(height: 16),
+          ValueListenableBuilder<int>(
+            valueListenable: _currentPage,
+            builder: (context, currentPage, _) {
+              return FutureBuilder<List<TimelineModel>>(
+                future: _timelinesFuture,
+                builder: (context, snapshot) {
+                  if (!snapshot.hasData) return SizedBox();
+                  return _buildCustomIndicator(
+                    currentPage,
+                    snapshot.data!.length,
+                  );
+                },
+              );
+            },
+          ),
+          SizedBox(height: 16),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTimelineItem(TimelineModel timeline) {
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: 16),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 8,
+            offset: Offset(0, 4),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: Stack(
+          fit: StackFit.expand,
           children: [
-            Icon(Icons.school, color: Colors.blue, size: 40),
-            SizedBox(width: 16),
-            Expanded(
+            Image.network(
+              '${AppConfig.assetBaseUrl}/${timeline.imagePath}',
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => Container(
+                color: secondaryColor.withOpacity(0.1),
+                child: Icon(Icons.image_not_supported, color: secondaryColor),
+              ),
+            ),
+            Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.bottomCenter,
+                  end: Alignment.topCenter,
+                  colors: [
+                    Colors.black.withOpacity(0.6),
+                    Colors.transparent,
+                  ],
+                ),
+              ),
+            ),
+            Positioned(
+              bottom: 16,
+              left: 16,
+              right: 16,
+              child: Text(
+                timeline.judulKegiatan,
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  shadows: [
+                    Shadow(
+                      offset: Offset(0, 1),
+                      blurRadius: 3.0,
+                      color: Colors.black.withOpacity(0.3),
+                    ),
+                  ],
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCustomIndicator(int currentPage, int count) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: List.generate(
+        count,
+            (index) => Container(
+          width: currentPage == index ? 24 : 8,
+          height: 8,
+          margin: EdgeInsets.symmetric(horizontal: 2),
+          decoration: BoxDecoration(
+            color: currentPage == index ? accentColor : secondaryColor.withOpacity(0.3),
+            borderRadius: BorderRadius.circular(4),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader(String title) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      child: Row(
+        children: [
+          Container(
+            width: 4,
+            height: 24,
+            decoration: BoxDecoration(
+              color: accentColor,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          SizedBox(width: 8),
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: accentColor,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Modifikasi method yang ada untuk menggunakan style baru
+  Widget _buildUKMDiikutiSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSectionHeader('UKM yang Diikuti'),
+        SizedBox(height: 16),
+        SizedBox(
+          height: 220,
+          child: FutureBuilder<List<UkmModel>>(
+            future: _ukmService.getUkmDiikuti(),
+            builder: _buildUKMList('/ukm_detail_registered'),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildUKMRekomendasiSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSectionHeader('UKM Yang Belum Diikuti'),
+        SizedBox(height: 16),
+        SizedBox(
+          height: 220,
+          child: FutureBuilder<List<UkmModel>>(
+            future: _ukmService.getUkmRekomendasi(),
+            builder: _buildUKMList('/ukm_detail', limit: 3),
+          ),
+        ),
+        _buildLihatLebihBanyak(),
+      ],
+    );
+  }
+
+  Widget _buildUKMCard({
+    required UkmModel ukm,
+    required int index,
+    required int totalItems,
+    required String routeName,
+  }) {
+    return GestureDetector(
+      onTap: () {
+        final args = {
+          'ukmId': ukm.idUkm.toString(),
+          'ukmName': ukm.namaUkm,
+        };
+        Navigator.pushNamed(
+          context,
+          routeName == '/ukm_detail_registered'
+              ? '/ukm_detail_registered'
+              : '/ukm_detail',
+          arguments: args,
+        );
+      },
+      child: Container(
+        width: 160,
+        margin: EdgeInsets.only(
+          left: 16,
+          right: index == totalItems - 1 ? 16 : 8,
+        ),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 8,
+              offset: Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+              child: Container(
+                height: 140,
+                color: secondaryColor.withOpacity(0.1),
+                child: Center(
+                  child: Image.network(
+                    '${AppConfig.assetBaseUrl}/${ukm.logo}',
+                    fit: BoxFit.fill,
+                    width: 110,
+                    errorBuilder: (_, __, ___) => Icon(
+                      Icons.image_not_supported,
+                      color: secondaryColor.withOpacity(0.5),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Selamat Datang di SIGMA!',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    ukm.namaUkm,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: accentColor,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  SizedBox(height: 8),
+                  SizedBox(height: 4),
                   Text(
-                    'Jelajahi aktivitas kampus dan bergabunglah dalam berbagai kegiatan seru!',
-                    style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                    ukm.deskripsi,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: textColor,
+                      height: 1.5,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
               ),
@@ -180,219 +476,165 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildUKMDiikutiList() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-          child: Text(
-            'UKM yang Diikuti',
+  Widget _buildLihatLebihBanyak() {
+    return Padding(
+        padding: const EdgeInsets.only(right: 16, top: 8),
+    child: Align(
+    alignment: Alignment.centerRight,
+    child: TextButton(
+    onPressed: () => Navigator.pushReplacementNamed(context, '/ukm_list'),
+    style: TextButton.styleFrom(
+    backgroundColor: secondaryColor.withOpacity(0.1),
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+      ),
+    ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            'Lihat Lebih Banyak',
             style: TextStyle(
-              fontSize: 18,
+              color: accentColor,
               fontWeight: FontWeight.bold,
-              color: Color(0xFF161D6F),
             ),
           ),
-        ),
-        SizedBox(height: 10),
-        Container(
-          height: 150,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            itemCount: ukmDiikuti.length,
-            itemBuilder: (context, index) {
-              return GestureDetector(
-                onTap: () {
-                  Navigator.pushNamed(
-                    context,
-                    '/ukm_detail_registered',
-                    arguments: ukmDiikuti[index]['nama'],
-                  );
-                },
-                child: Card(
-                  margin: EdgeInsets.only(
-                      left: 16, right: index == ukmDiikuti.length - 1 ? 16 : 0),
-                  child: Container(
-                    width: 200,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          height: 80,
-                          decoration: BoxDecoration(
-                            borderRadius:
-                            BorderRadius.vertical(top: Radius.circular(10)),
-                            image: DecorationImage(
-                              image: AssetImage(ukmDiikuti[index]['image']),
-                              fit: BoxFit.cover,
-                            ),
-                          ),
-                        ),
-                        Expanded(  // Tambahkan Expanded di sini
-                          child: Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisSize: MainAxisSize.min,  // Tambahkan ini
-                              children: [
-                                Text(
-                                  ukmDiikuti[index]['nama'],
-                                  style: TextStyle(
-                                    fontSize: 16,  // Kurangi ukuran font
-                                    fontWeight: FontWeight.normal,
-                                    color: Color(0xFF161D6F),
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                SizedBox(height: 4),
-                                Text(
-                                  ukmDiikuti[index]['deskripsi'],
-                                  style: TextStyle(fontSize: 12),  // Kurangi ukuran font
-                                  overflow: TextOverflow.ellipsis,
-                                  maxLines: 2,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              );
-            },
+          SizedBox(width: 4),
+          Icon(
+            Icons.arrow_forward_rounded,
+            size: 16,
+            color: accentColor,
           ),
-        ),
-      ],
-    );
-  }
-
-  void _navigateToDetail(String namaUKM) {
-    Navigator.pushNamed(context, '/ukm_detail', arguments: namaUKM);
-  }
-
-  Widget _buildUKMRekomendasiSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-          child: Text(
-            'UKM Rekomendasi',
-            style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF161D6F)),
-          ),
-        ),
-        SizedBox(height: 10),
-        Container(
-          height: 150,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            itemCount: ukmDiikuti.length,
-            itemBuilder: (context, index) {
-              return GestureDetector(
-                onTap: () {
-                  _navigateToDetail(
-                    ukmDiikuti[index]['nama'],
-                  );
-                },
-                child: Card(
-                  margin: EdgeInsets.only(
-                      left: 16, right: index == ukmDiikuti.length - 1 ? 16 : 0),
-                  child: Container(
-                    width: 200,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          height: 80,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.vertical(top: Radius.circular(10)),
-                            image: DecorationImage(
-                              image: AssetImage(ukmDiikuti[index]['image']),
-                              fit: BoxFit.cover,
-                            ),
-                          ),
-                        ),
-                        Expanded(
-                          child: Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  ukmDiikuti[index]['nama'],
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.normal,
-                                    color: Color(0xFF161D6F),
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                SizedBox(height: 4),
-                                Text(
-                                  ukmDiikuti[index]['deskripsi'],
-                                  style: TextStyle(fontSize: 12),
-                                  overflow: TextOverflow.ellipsis,
-                                  maxLines: 2,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              );
-            },
-          ),
-        ),
-        // Jangan lupa tambahkan bagian "Lihat Lebih Banyak" di sini
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              TextButton(
-                onPressed: () {
-                  Navigator.pushReplacementNamed(context, '/ukm_list');
-                },
-                child: Text(
-                  'Lihat Lebih Banyak',
-                  style: TextStyle(color: Colors.blue),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildIndicator(int index) {
-    return Container(
-      margin: EdgeInsets.symmetric(horizontal: 5),
-      height: 8,
-      width: _currentPage == index ? 24 : 8,
-      decoration: BoxDecoration(
-        color: _currentPage == index ? Colors.blue : Colors.grey,
-        borderRadius: BorderRadius.circular(12),
+        ],
       ),
+    ),
+    ),
     );
   }
 
-  void onItemTapped(int index) {
-    setState(() {
-      _currentIndex = index;
-      // Mengatur halaman sesuai dengan index yang dipilih
-      // Ganti dengan logika navigasi yang sesuai
+  Widget Function(BuildContext, AsyncSnapshot<List<UkmModel>>) _buildUKMList(
+      String routeName, {
+        int? limit,
+      }) {
+    return (context, snapshot) {
+      if (snapshot.connectionState == ConnectionState.waiting) {
+        return Center(child: CircularProgressIndicator(color: accentColor));
+      }
+
+      if (snapshot.hasError) {
+        return Center(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.error_outline, color: Colors.red, size: 48),
+                SizedBox(height: 16),
+                Text(
+                  'Terjadi kesalahan: ${snapshot.error}',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: textColor),
+                ),
+              ],
+            ),
+          ),
+        );
+      }
+
+      var ukms = snapshot.data ?? [];
+      if (limit != null) {
+        ukms = ukms.take(limit).toList();
+      }
+
+      if (routeName == '/ukm_detail_registered' && ukms.isEmpty) {
+        return Center(
+          child: Container(
+            margin: EdgeInsets.symmetric(horizontal: 16),
+            padding: EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: secondaryColor.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: secondaryColor.withOpacity(0.3),
+              ),
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.group_add_rounded,
+                  size: 48,
+                  color: accentColor.withOpacity(0.5),
+                ),
+                SizedBox(height: 12),
+                Text(
+                  'Anda belum mengikuti UKM manapun',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: accentColor,
+                  ),
+                ),
+                SizedBox(height: 4),
+                Text(
+                  'Silahkan gabung UKM yang anda inginkan',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: textColor,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      }
+
+      return ListView.builder(
+        scrollDirection: Axis.horizontal,
+        itemCount: ukms.length,
+        itemBuilder: (context, index) => _buildUKMCard(
+          ukm: ukms[index],
+          index: index,
+          totalItems: ukms.length,
+          routeName: routeName,
+        ),
+      );
+    };
+  }
+
+  void _startImageSlider() {
+    _timer = Timer.periodic(Duration(seconds: 5), (Timer timer) async {
+      final timelines = await _timelinesFuture;
+      if (timelines.isEmpty) return;
+
+      if (_currentPage.value < timelines.length - 1) {
+        _currentPage.value++;
+      } else {
+        _currentPage.value = 0;
+      }
+
+      if (_pageController.hasClients) {
+        _pageController.animateToPage(
+          _currentPage.value,
+          duration: Duration(milliseconds: 500),
+          curve: Curves.easeInOut,
+        );
+      }
     });
+  }
+
+  void _onItemTapped(int index) {
+    setState(() => _currentIndex = index);
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    _pageController.dispose();
+    _currentPage.dispose();
+    super.dispose();
   }
 }

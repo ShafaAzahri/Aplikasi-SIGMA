@@ -1,179 +1,261 @@
-// registration_page.dart
 import 'package:flutter/material.dart';
+import 'package:latihan/service/form.dart';
 
 class RegistrationPage extends StatefulWidget {
+  final String ukmId;
+  final String ukmName;
+  final int periodId;
+
+  const RegistrationPage({
+    Key? key,
+    required this.ukmId,
+    required this.ukmName,
+    required this.periodId,
+  }) : super(key: key);
+
   @override
   _RegistrationPageState createState() => _RegistrationPageState();
 }
 
 class _RegistrationPageState extends State<RegistrationPage> {
-  final List<String> genders = ['Laki-laki', 'Perempuan'];
-  final List<String> majors = ['Teknik Informatika', 'Sistem Informasi', 'Manajemen'];
-  final List<String> studyPrograms = ['S1', 'D3', 'Pascasarjana'];
+  final _mahasiswaService = MahasiswaService();
+  final _formKey = GlobalKey<FormState>();
+  bool _isLoading = true;
 
-  String? selectedGender;
-  String? selectedMajor;
-  String? selectedStudyProgram;
-
+  // Controllers for form fields
   final TextEditingController nameController = TextEditingController();
   final TextEditingController nimController = TextEditingController();
+  final TextEditingController genderController = TextEditingController();
+  final TextEditingController majorController = TextEditingController();
   final TextEditingController classController = TextEditingController();
   final TextEditingController addressController = TextEditingController();
   final TextEditingController whatsappController = TextEditingController();
+  final TextEditingController emailController = TextEditingController();
   final TextEditingController motivationController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadMahasiswaData();
+  }
+
+  Future<void> _loadMahasiswaData() async {
+    try {
+      setState(() => _isLoading = true);
+      final mahasiswaData = await _mahasiswaService.getMahasiswaFormData();
+      
+      if (mahasiswaData != null) {
+        nameController.text = mahasiswaData.namaLengkap;
+        nimController.text = mahasiswaData.nim;
+        genderController.text = mahasiswaData.jenisKelamin;
+        majorController.text = mahasiswaData.programStudi;
+        classController.text = mahasiswaData.kelas;
+        addressController.text = mahasiswaData.alamat;
+        whatsappController.text = mahasiswaData.noWhatsapp;
+        emailController.text = mahasiswaData.email;
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error loading data: $e')),
+      );
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  Widget _buildTextField(
+    TextEditingController controller,
+    String label,
+    {bool readOnly = false}
+  ) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: TextField(
+        controller: controller,
+        readOnly: readOnly,
+        decoration: InputDecoration(
+          labelText: label,
+          labelStyle: TextStyle(
+            color: Colors.grey[600],
+          ),
+          border: UnderlineInputBorder(
+            borderSide: BorderSide(color: Colors.grey[300]!),
+          ),
+          enabledBorder: UnderlineInputBorder(
+            borderSide: BorderSide(color: Colors.grey[300]!),
+          ),
+          focusedBorder: UnderlineInputBorder(
+            borderSide: BorderSide(color: Color(0xFF161D6F)),
+          ),
+          enabled: !readOnly,
+        ),
+        style: TextStyle(
+          color: readOnly ? Colors.grey[600] : Colors.black,
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Pendaftaran'),
-        backgroundColor: Color(0xFF1E1D67),
+        title: Text('Pendaftaran ${widget.ukmName}'),
+        backgroundColor: Color(0xFF161D6F),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Center(
-          child: SingleChildScrollView(
-            child: Container(
-              padding: EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(8),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.grey.withOpacity(0.2),
-                    spreadRadius: 5,
-                    blurRadius: 7,
-                    offset: Offset(0, 3), // changes position of shadow
-                  ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Formulir Pendaftaran Tahapan Pertama',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
+      body: _isLoading
+          ? Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+              padding: EdgeInsets.all(16),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Card(
+                      elevation: 4,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Padding(
+                        padding: EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Form Pendaftaran Tahap 1',
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF161D6F),
+                              ),
+                            ),
+                            SizedBox(height: 24),
+                            _buildTextField(nameController, 'Nama Lengkap', readOnly: true),
+                            _buildTextField(nimController, 'NIM', readOnly: true),
+                            _buildTextField(genderController, 'Jenis Kelamin', readOnly: true),
+                            _buildTextField(majorController, 'Program Studi', readOnly: true),
+                            _buildTextField(classController, 'Kelas', readOnly: true),
+                            _buildTextField(addressController, 'Alamat', readOnly: true),
+                            _buildTextField(whatsappController, 'No WhatsApp', readOnly: true),
+                            _buildTextField(emailController, 'Email', readOnly: true),
+                            _buildTextField(
+                              motivationController,
+                              'Motivasi',
+                              readOnly: false,
+                            ),
+                            SizedBox(height: 24),
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: ElevatedButton(
+                                onPressed: _submitForm,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Color(0xFF161D6F),
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: 32,
+                                    vertical: 12,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                ),
+                                child: Text(
+                                  'Submit',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
-                  ),
-                  SizedBox(height: 16),
-                  _buildTextField(nameController, 'Nama Lengkap'),
-                  _buildTextField(nimController, 'NIM'),
-                  _buildDropdown('Jenis Kelamin', genders, (value) {
-                    setState(() {
-                      selectedGender = value;
-                    });
-                  }, selectedGender),
-                  _buildDropdown('Jurusan', majors, (value) {
-                    setState(() {
-                      selectedMajor = value;
-                    });
-                  }, selectedMajor),
-                  _buildDropdown('Program Studi', studyPrograms, (value) {
-                    setState(() {
-                      selectedStudyProgram = value;
-                    });
-                  }, selectedStudyProgram),
-                  _buildTextField(classController, 'Kelas'),
-                  _buildTextField(addressController, 'Alamat'),
-                  _buildTextField(whatsappController, 'No WhatsApp'),
-                  _buildTextField(motivationController, 'Motivasi'),
-                  SizedBox(height: 20),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      ElevatedButton(
-                        onPressed: () {
-                          // Handle Edit action here
-                          // You can add your logic to reset the form or go back
-                          // For example, clear all fields
-                          nameController.clear();
-                          nimController.clear();
-                          classController.clear();
-                          addressController.clear();
-                          whatsappController.clear();
-                          motivationController.clear();
-                          setState(() {
-                            selectedGender = null;
-                            selectedMajor = null;
-                            selectedStudyProgram = null;
-                          });
-                        },
-                        child: Text('Edit'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.orange, // Edit button color
-                          padding: EdgeInsets.symmetric(vertical: 12, horizontal: 24),
-                          textStyle: TextStyle(
-                            fontSize: 16,
-                          ),
-                        ),
-                      ),
-                      ElevatedButton(
-                        onPressed: () {
-                          // Handle Submit action here
-                          // You can add your submission logic
-                          // For example, printing the form data
-                          print('Name: ${nameController.text}');
-                          print('NIM: ${nimController.text}');
-                          print('Gender: $selectedGender');
-                          print('Major: $selectedMajor');
-                          print('Study Program: $selectedStudyProgram');
-                          print('Class: ${classController.text}');
-                          print('Address: ${addressController.text}');
-                          print('WhatsApp: ${whatsappController.text}');
-                          print('Motivation: ${motivationController.text}');
-                        },
-                        child: Text('Submit'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Color(0xFF1E1D67), // Submit button color
-                          padding: EdgeInsets.symmetric(vertical: 12, horizontal: 24),
-                          textStyle: TextStyle(
-                            fontSize: 16,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
-          ),
-        ),
-      ),
     );
   }
 
-  Widget _buildTextField(TextEditingController controller, String label) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16.0),
-      child: TextField(
-        controller: controller,
-        decoration: InputDecoration(
-          labelText: label,
-          border: OutlineInputBorder(),
-        ),
-      ),
-    );
-  }
+void _submitForm() async {
+  if (_formKey.currentState?.validate() ?? false) {
+    try {
+      setState(() => _isLoading = true);
 
-  Widget _buildDropdown(String label, List<String> items, ValueChanged<String?> onChanged, String? selectedValue) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16.0),
-      child: DropdownButtonFormField<String>(
-        decoration: InputDecoration(
-          labelText: label,
-          border: OutlineInputBorder(),
-        ),
-        value: selectedValue,
-        onChanged: onChanged,
-        items: items.map<DropdownMenuItem<String>>((String value) {
-          return DropdownMenuItem<String>(
-            value: value,
-            child: Text(value),
-          );
-        }).toList(),
-      ),
-    );
+      // Validasi motivasi tidak boleh kosong
+      if (motivationController.text.trim().isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Motivasi tidak boleh kosong')),
+        );
+        return;
+      }
+
+      final success = await _mahasiswaService.submitPendaftaranTahap1(
+        idUkm: widget.ukmId,
+        motivasi: motivationController.text,
+      );
+
+      if (success) {
+        // Tampilkan dialog sukses
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: Text('Berhasil!'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.check_circle,
+                    color: Colors.green,
+                    size: 50,
+                  ),
+                  SizedBox(height: 16),
+                  Text('Anda berhasil mendaftar tahap 1'),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  child: Text('OK'),
+                  onPressed: () {
+                    Navigator.of(context).pop(); // Tutup dialog
+                    Navigator.of(context).pop(); // Kembali ke halaman sebelumnya
+                  },
+                ),
+              ],
+            );
+          },
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal mendaftar. Silakan coba lagi.')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: ${e.toString()}')),
+      );
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
+}
+
+  @override
+  void dispose() {
+    // Dispose all controllers
+    nameController.dispose();
+    nimController.dispose();
+    genderController.dispose();
+    majorController.dispose();
+    classController.dispose();
+    addressController.dispose();
+    whatsappController.dispose();
+    emailController.dispose();
+    motivationController.dispose();
+    super.dispose();
   }
 }

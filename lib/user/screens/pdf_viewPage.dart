@@ -2,13 +2,15 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_pdfview/flutter_pdfview.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:path_provider/path_provider.dart' as path_provider;
 import 'package:flutter/services.dart' show rootBundle;
 
 class PDFViewerPage extends StatefulWidget {
   final String pdfFileName;
 
-  PDFViewerPage({required this.pdfFileName});
+  const PDFViewerPage({
+    Key? key, 
+    required this.pdfFileName,
+  }) : super(key: key);
 
   @override
   _PDFViewerPageState createState() => _PDFViewerPageState();
@@ -29,15 +31,14 @@ class _PDFViewerPageState extends State<PDFViewerPage> {
 
   Future<File> getFileFromAssets(String asset) async {
     try {
-      var data = await rootBundle.load(asset);
-      var bytes = data.buffer.asUint8List();
-      var dir = await getApplicationDocumentsDirectory();
-      File file = File("${dir.path}/rapat1.pdf");
-
-      File assetFile = await file.writeAsBytes(bytes);
+      final data = await rootBundle.load(asset);
+      final bytes = data.buffer.asUint8List();
+      final dir = await getApplicationDocumentsDirectory();
+      final file = File("${dir.path}/rapat1.pdf");
+      final assetFile = await file.writeAsBytes(bytes);
       return assetFile;
     } catch (e) {
-      throw Exception("Error opening asset file");
+      throw Exception("Error opening asset file: $e");
     }
   }
 
@@ -45,7 +46,8 @@ class _PDFViewerPageState extends State<PDFViewerPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('PDF Viewer'),
+        title: const Text('PDF Viewer'),
+        backgroundColor: const Color.fromARGB(255, 255, 252, 230),
       ),
       body: localPath != null
           ? PDFView(
@@ -54,8 +56,14 @@ class _PDFViewerPageState extends State<PDFViewerPage> {
               swipeHorizontal: true,
               autoSpacing: false,
               pageFling: false,
+              onError: (error) {
+                print('Error while loading PDF: $error');
+              },
+              onPageError: (page, error) {
+                print('Error on page $page: $error');
+              },
             )
-          : Center(child: CircularProgressIndicator()),
+          : const Center(child: CircularProgressIndicator()),
     );
   }
 }

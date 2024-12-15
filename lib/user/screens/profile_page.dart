@@ -1,202 +1,686 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:latihan/service/api_url.dart';
 import 'package:latihan/user/util/navbar_function.dart';
+import 'package:latihan/models/mahasiswa.dart';
+import 'package:latihan/models/ukm_keanggotaan.dart';
+import 'package:latihan/service/mahasiswa.dart';
+import 'package:latihan/service/auth_service.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:latihan/service/edit_foto.dart';
 
-class ProfilePage extends StatelessWidget {
+// Tema warna
+const Color creamColor = Color(0xFFFFF8DC);      // Cream
+const Color deepCream = Color(0xFFDEB887);       // BurlyWood
+const Color accentColor = Color(0xFF8B4513);     // SaddleBrown
+const Color lightCream = Color(0xFFFAF3E0);      // Light cream for cards
+const Color textColor = Color(0xFF4A4A4A);       // Dark gray for text
+
+class ProfilePage extends StatefulWidget {
+  @override
+  _ProfilePageState createState() => _ProfilePageState();
+}
+
+class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+  final ProfileService _profileService = ProfileService();
+  late Future<ProfileResponse> _profileFuture;
 
   @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 3, vsync: this);
+    _profileFuture = _profileService.getMahasiswaProfile();
+  }
 
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-
     return Scaffold(
-
+      backgroundColor: creamColor,
       appBar: AppBar(
-
-        title: Text('Profil'),
-
-      ),
-
-      body: SingleChildScrollView(
-
-        child: Column(
-
-          children: [
-
-            _buildProfileHeader(),
-
-            _buildPersonalInfo(),
-
-            _buildUKMList(),
-
-            SizedBox(height: 20),
-
-            _buildLogoutButton(context),
-
-            SizedBox(height: 20),
-          ],
+        elevation: 0,
+        backgroundColor: creamColor,
+        automaticallyImplyLeading: false,
+        title: Text(
+          'Profil',
+          style: TextStyle(
+            color: accentColor,
+            fontSize: 24,
+            fontWeight: FontWeight.w600,
+          ),
         ),
+        actions: [
+          Container(
+            margin: EdgeInsets.only(right: 12),
+            decoration: BoxDecoration(
+              color: deepCream.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: IconButton(
+              icon: Icon(Icons.edit_outlined, color: accentColor),
+              onPressed: () => _showEditProfileOptions(),
+            ),
+          ),
+        ],
       ),
-      bottomNavigationBar: buildBottomNavBar(2, context, (index) {
-      }),
-    );
+      body: FutureBuilder<ProfileResponse>(
+        future: _profileFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Center(
+              child: CircularProgressIndicator(color: accentColor),
+            );
+          }
 
+          if (!snapshot.hasData) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.error_outline, size: 48, color: Colors.red[300]),
+                  SizedBox(height: 16),
+                  Text(
+                    'Data tidak tersedia',
+                    style: TextStyle(
+                      color: textColor,
+                      fontSize: 16,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          final profileData = snapshot.data!;
+          return Column(
+            children: [
+              _buildProfileHeader(profileData.profile),
+              SizedBox(height: 20),
+              _buildCustomTabBar(),
+              SizedBox(height: 20),
+              Expanded(
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: lightCream,
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(24),
+                      topRight: Radius.circular(24),
+                    ),
+                  ),
+                  child: TabBarView(
+                    controller: _tabController,
+                    children: [
+                      _buildUKMList(profileData.ukmAktif, isActive: true),
+                      _buildUKMList(profileData.ukmHistori),
+                      _buildPendingUKMList(),
+                    ],
+                  ),
+                ),
+              ),
+              _buildLogoutButton(),
+            ],
+          );
+        },
+      ),
+      bottomNavigationBar: buildBottomNavBar(2, context, _onNavBarTapped),
+    );
   }
 
-
-  Widget _buildLogoutButton(BuildContext context) {
-    return ElevatedButton(
-      onPressed: () {
-        Navigator.of(context).pushReplacementNamed('/login');
-      },
-      style: ElevatedButton.styleFrom(
-        backgroundColor: Colors.red,
-        padding: EdgeInsets.symmetric(horizontal: 50, vertical: 15),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(30),
-        ),
-      ),
-
-      child: Text('Logout',
-        style: TextStyle(
-          color: Colors.white,
-          fontSize: 18,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildProfileHeader() {
+  Widget _buildProfileHeader(MahasiswaModel profile) {
     return Container(
-      padding: EdgeInsets.all(16),
+      padding: EdgeInsets.symmetric(horizontal: 24, vertical: 16),
       child: Column(
         children: [
-          CircleAvatar(
-            radius: 50,
-            backgroundImage: AssetImage('assets/1.jpg'),
+          Stack(
+            children: [
+              Container(
+                padding: EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: deepCream, width: 2),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black12,
+                      blurRadius: 8,
+                      offset: Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: CircleAvatar(
+                  radius: 50,
+                  backgroundColor: deepCream.withOpacity(0.2),
+                  backgroundImage: NetworkImage(
+                    '${AppConfig.assetBaseUrl}/profile/${profile.fotoPath}',
+                  ),
+                  onBackgroundImageError: (e, s) {
+                    print('Error loading profile image: $e');
+                  },
+                ),
+              ),
+              Positioned(
+                bottom: 0,
+                right: 0,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black12,
+                        blurRadius: 4,
+                        offset: Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: IconButton(
+                    icon: Icon(Icons.camera_alt, size: 20, color: accentColor),
+                    onPressed: () => _showImageEditOptions(),
+                  ),
+                ),
+              ),
+            ],
           ),
           SizedBox(height: 16),
           Text(
-            'Furina Hutapea',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-          ),
-          Text('433.23.2.23'),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPersonalInfo() {
-    return Card(
-      margin: EdgeInsets.all(16),
-      child: Padding(
-        padding: EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildInfoRow('Jurusan', 'Teknik Elektro'),
-            _buildInfoRow('Program Studi', 'D4 Teknologi Rekayasa Komputer'),
-            _buildInfoRow('Kelas', 'TI-2C'),
-            _buildInfoRow('Jenis Kelamin', 'Laki-laki'),
-            _buildInfoRow('No. WhatsApp', '081234567890'),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildInfoRow(String label, String value) {
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label, style: TextStyle(fontWeight: FontWeight.bold)),
-          Text(value),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildUKMList() {
-
-    List<Map<String, String>> ukms = [
-
-      {
-
-        'name': 'Pengembangan Pengetahuan',
-
-        'period': '2023-2024',
-
-        'logo': 'assets/pp.png',
-
-      },
-
-      {
-
-        'name': 'Politeknik Computer Club',
-
-        'period': '2023-2024',
-
-        'logo': 'assets/logo-pcc.png',
-
-      },
-
-    ];
-
-
-    return Card(
-
-      margin: EdgeInsets.all(16),
-
-      child: Padding(
-
-        padding: EdgeInsets.all(16),
-
-        child: Column(
-
-          crossAxisAlignment: CrossAxisAlignment.start,
-
-          children: [
-
-            Text('Daftar UKM', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-
-            SizedBox(height: 16),
-
-            ListView.builder(
-
-              shrinkWrap: true,
-
-              physics: NeverScrollableScrollPhysics(),
-
-              itemCount: ukms.length,
-
-              itemBuilder: (context, index) {
-
-                return ListTile(
-
-                  leading: CircleAvatar(
-
-                    backgroundImage: AssetImage(ukms[index]['logo']!),
-
-                  ),
-
-                  title: Text(ukms[index]['name']!),
-
-                  subtitle: Text(ukms[index]['period']!),
-
-                );
-
-              },
-
+            profile.namaLengkap,
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: accentColor,
             ),
-
-          ],
-
-        ),
-
+            textAlign: TextAlign.center,
+          ),
+          SizedBox(height: 8),
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+            decoration: BoxDecoration(
+              color: deepCream.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: deepCream.withOpacity(0.3)),
+            ),
+            child: Text(
+              profile.nim,
+              style: TextStyle(
+                fontSize: 16,
+                color: accentColor,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
       ),
-
     );
+  }
 
+  Widget _buildCustomTabBar() {
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: 24),
+      decoration: BoxDecoration(
+        border: Border(
+          bottom: BorderSide(
+            color: Colors.grey[300]!,
+            width: 1,
+          ),
+        ),
+      ),
+      child: TabBar(
+        controller: _tabController,
+        // Menggunakan indicator custom
+        indicator: UnderlineTabIndicator(
+          borderSide: BorderSide(
+            color: Color(0xFF161D6F), // Warna accent yang sama dengan tema aplikasi
+            width: 3, // Ketebalan garis
+          ),
+          insets: EdgeInsets.symmetric(horizontal: 16), // Padding horizontal untuk garis
+        ),
+        labelColor: Color(0xFF161D6F), // Warna text saat aktif
+        unselectedLabelColor: Colors.grey[600], // Warna text saat tidak aktif
+        labelStyle: TextStyle(
+          fontWeight: FontWeight.w600,
+          fontSize: 15,
+        ),
+        unselectedLabelStyle: TextStyle(
+          fontWeight: FontWeight.w500,
+          fontSize: 15,
+        ),
+        tabs: [
+          Tab(
+            text: 'UKM Aktif',
+            height: 46, // Tinggi tab yang konsisten
+          ),
+          Tab(
+            text: 'Riwayat',
+            height: 46,
+          ),
+          Tab(
+            text: 'Pendaftaran',
+            height: 46,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildUKMList(List<UkmKeanggotaanModel> ukms, {bool isActive = false}) {
+    if (ukms.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.groups_outlined,
+              size: 64,
+              color: deepCream.withOpacity(0.5),
+            ),
+            SizedBox(height: 16),
+            Text(
+              'Belum ada UKM',
+              style: TextStyle(
+                fontSize: 18,
+                color: textColor,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return ListView.builder(
+      padding: EdgeInsets.all(16),
+      itemCount: ukms.length,
+      itemBuilder: (context, index) {
+        final ukm = ukms[index];
+        return Card(
+          margin: EdgeInsets.only(bottom: 12),
+          elevation: 2,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: InkWell(
+            onTap: isActive ? () => _navigateToUKMDetail(ukm) : null,
+            borderRadius: BorderRadius.circular(16),
+            child: Padding(
+              padding: EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  Container(
+                    width: 60,
+                    height: 60,
+                    decoration: BoxDecoration(
+                      color: deepCream.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: Image.network(
+                        '${AppConfig.assetBaseUrl}/${ukm.logoUkm}',
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) =>
+                            Icon(Icons.image_not_supported, color: deepCream),
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          ukm.namaUkm,
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: accentColor,
+                          ),
+                        ),
+                        SizedBox(height: 4),
+                        Text(
+                          'Periode: ${ukm.periode}',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: textColor.withOpacity(0.8),
+                          ),
+                        ),
+                        SizedBox(height: 4),
+                        Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: _getStatusColor(ukm.status).withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            ukm.status,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: _getStatusColor(ukm.status),
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (isActive)
+                    Icon(
+                      Icons.chevron_right,
+                      color: accentColor,
+                    ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Color _getStatusColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'aktif':
+        return Colors.green;
+      case 'tidak aktif':
+        return Colors.red;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  Widget _buildPendingUKMList() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.hourglass_empty,
+            size: 64,
+            color: deepCream.withOpacity(0.5),
+          ),
+          SizedBox(height: 16),
+          Text(
+            'Tidak ada pendaftaran yang sedang diproses',
+            style: TextStyle(
+              fontSize: 16,
+              color: textColor,
+              fontWeight: FontWeight.w500,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLogoutButton() {
+    return Container(
+      padding: EdgeInsets.all(16),
+      child: ElevatedButton(
+        onPressed: () => _showLogoutDialog(),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.white,
+          foregroundColor: Colors.red,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          padding: EdgeInsets.symmetric(vertical: 12),
+          elevation: 2,
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.logout_rounded),
+            SizedBox(width: 8),
+            Text(
+              'Keluar',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showImageEditOptions() {
+    final _photoService = PhotoService();
+    final _picker = ImagePicker();
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        padding: EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              margin: EdgeInsets.only(bottom: 20),
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            ListTile(
+              leading: Container(
+                padding: EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: deepCream.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(Icons.photo_library, color: accentColor),
+              ),
+              title: Text('Pilih dari Galeri'),
+              onTap: () => _pickImage(ImageSource.gallery, _photoService),
+            ),
+            ListTile(
+              leading: Container(
+                padding: EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: deepCream.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(Icons.camera_alt, color: accentColor),
+              ),
+              title: Text('Ambil Foto'),
+              onTap: () => _pickImage(ImageSource.camera, _photoService),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _pickImage(ImageSource source, PhotoService photoService) async {
+    try {
+      final ImagePicker picker = ImagePicker();
+      final XFile? image = await picker.pickImage(source: source);
+
+      if (image != null) {
+        final success = await photoService.updateProfilePhoto(File(image.path));
+
+        if (success) {
+          Navigator.pop(context); // Close bottom sheet
+          setState(() {
+            _profileFuture = _profileService.getMahasiswaProfile();
+          });
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Foto profil berhasil diperbarui'),
+              backgroundColor: Colors.green,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              margin: EdgeInsets.all(10),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Gagal mengupdate foto: $e'),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+          margin: EdgeInsets.all(10),
+        ),
+      );
+    }
+  }
+
+  void _showEditProfileOptions() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        padding: EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              margin: EdgeInsets.only(bottom: 20),
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            ListTile(
+              leading: Container(
+                padding: EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: deepCream.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(Icons.person_outline, color: accentColor),
+              ),
+              title: Text('Edit Profil'),
+              onTap: () async {
+                Navigator.pop(context);
+                Navigator.pushNamed(context, '/edit_profile');
+              },
+            ),
+            ListTile(
+              leading: Container(
+                padding: EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: deepCream.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(Icons.lock_outline, color: accentColor),
+              ),
+              title: Text('Ganti Password'),
+              onTap: () async {
+                Navigator.pop(context);
+                Navigator.pushNamed(context, '/edit_password');
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showLogoutDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        title: Text(
+          'Keluar',
+          style: TextStyle(
+            color: accentColor,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        content: Text(
+          'Apakah Anda yakin ingin keluar?',
+          style: TextStyle(color: textColor),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              'Batal',
+              style: TextStyle(color: Colors.grey),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final authService = AuthService();
+              final success = await authService.logout();
+
+              if (success) {
+                Navigator.of(context).pushNamedAndRemoveUntil(
+                  '/login',
+                  (Route<dynamic> route) => false,
+                );
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Gagal logout. Silakan coba lagi.'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            child: Text(
+                'Keluar',
+                style: TextStyle(color: Colors.white),
+                ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _navigateToUKMDetail(UkmKeanggotaanModel ukm) {
+    Navigator.pushNamed(
+      context,
+      '/ukm_detail_registered',
+      arguments: ukm.namaUkm,
+    );
+  }
+
+  void _onNavBarTapped(int index) {
+    if (index == 0) {
+      Navigator.pushReplacementNamed(context, '/beranda');
+    } else if (index == 1) {
+      Navigator.pushReplacementNamed(context, '/ukm_list');
+    }
   }
 }

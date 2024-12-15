@@ -10,12 +10,33 @@ void navigateWithAnimation(
       return getPageByRoute(routeName);
     },
     transitionsBuilder: (context, animation, secondaryAnimation, child) {
-      return FadeTransition(
-        opacity: animation,
-        child: child,
+      const begin = Offset(0.0, 0.05);
+      const end = Offset.zero;
+      const curve = Curves.easeOutCubic;
+
+      var tween = Tween(begin: begin, end: end).chain(
+        CurveTween(curve: curve),
+      );
+
+      var offsetAnimation = animation.drive(tween);
+      var fadeAnimation = Tween<double>(
+        begin: 0.0,
+        end: 1.0,
+      ).animate(CurvedAnimation(
+        parent: animation,
+        curve: curve,
+      ));
+
+      return SlideTransition(
+        position: offsetAnimation,
+        child: FadeTransition(
+          opacity: fadeAnimation,
+          child: child,
+        ),
       );
     },
-    transitionDuration: Duration(milliseconds: 500),
+    transitionDuration: Duration(milliseconds: 300),
+    reverseTransitionDuration: Duration(milliseconds: 300),
   ));
 }
 
@@ -34,38 +55,92 @@ Widget getPageByRoute(String routeName) {
 
 Widget buildBottomNavBar(
     int currentIndex, BuildContext context, Function(int) onItemTapped) {
-  return BottomNavigationBar(
-    currentIndex: currentIndex,
-    items: const <BottomNavigationBarItem>[
-      BottomNavigationBarItem(
-        icon: Icon(Icons.home),
-        label: 'Beranda',
-      ),
-      BottomNavigationBarItem(
-        icon: Icon(Icons.group),
-        label: 'UKM',
-      ),
-      BottomNavigationBarItem(
-        icon: Icon(Icons.person),
-        label: 'Profil',
-      ),
-    ],
-    selectedItemColor: const Color.fromARGB(255, 22, 29, 111),
-    unselectedItemColor: const Color.fromARGB(255, 22, 29, 111),
-    backgroundColor: const Color.fromARGB(255, 255, 252, 230),
-    type: BottomNavigationBarType.fixed,
-    elevation: 8,
-    onTap: (index) {
-      // Mengatur navigasi sesuai dengan item yang dipilih
-      if (index == 0) {
-        navigateWithAnimation(context, '/beranda', index);
-      } else if (index == 1) {
-        navigateWithAnimation(
-            context, '/ukm_list', index); // Animasi untuk ListUKM
-      } else if (index == 2) {
-        navigateWithAnimation(context, '/profile', index);
-      }
-      onItemTapped(index); // Panggil callback fungsi jika diperlukan
-    },
+  return Container(
+    decoration: BoxDecoration(
+      color: const Color.fromARGB(255, 255, 252, 230),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.05),
+          blurRadius: 10,
+          offset: Offset(0, -3),
+        ),
+      ],
+    ),
+    child: BottomNavigationBar(
+      currentIndex: currentIndex,
+      items: <BottomNavigationBarItem>[
+        BottomNavigationBarItem(
+          icon: AnimatedSwitcher(
+            duration: Duration(milliseconds: 200),
+            transitionBuilder: (Widget child, Animation<double> animation) {
+              return ScaleTransition(
+                scale: animation,
+                child: child,
+              );
+            },
+            child: Icon(
+              currentIndex == 0 ? Icons.home : Icons.home_outlined,
+              key: ValueKey<bool>(currentIndex == 0),
+            ),
+          ),
+          label: 'Beranda',
+        ),
+        BottomNavigationBarItem(
+          icon: AnimatedSwitcher(
+            duration: Duration(milliseconds: 200),
+            transitionBuilder: (Widget child, Animation<double> animation) {
+              return ScaleTransition(
+                scale: animation,
+                child: child,
+              );
+            },
+            child: Icon(
+              currentIndex == 1 ? Icons.group : Icons.group_outlined,
+              key: ValueKey<bool>(currentIndex == 1),
+            ),
+          ),
+          label: 'UKM',
+        ),
+        BottomNavigationBarItem(
+          icon: AnimatedSwitcher(
+            duration: Duration(milliseconds: 200),
+            transitionBuilder: (Widget child, Animation<double> animation) {
+              return ScaleTransition(
+                scale: animation,
+                child: child,
+              );
+            },
+            child: Icon(
+              currentIndex == 2 ? Icons.person : Icons.person_outlined,
+              key: ValueKey<bool>(currentIndex == 2),
+            ),
+          ),
+          label: 'Profil',
+        ),
+      ],
+      selectedItemColor: const Color.fromARGB(255, 22, 29, 111),
+      unselectedItemColor: const Color.fromARGB(255, 22, 29, 111).withOpacity(0.5),
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      type: BottomNavigationBarType.fixed,
+      selectedFontSize: 12,
+      unselectedFontSize: 12,
+      selectedLabelStyle: TextStyle(fontWeight: FontWeight.w600),
+      unselectedLabelStyle: TextStyle(fontWeight: FontWeight.normal),
+      onTap: (index) {
+        if (index == currentIndex) return;
+
+        final routes = {
+          0: '/beranda',
+          1: '/ukm_list',
+          2: '/profile',
+        };
+
+        if (routes.containsKey(index)) {
+          navigateWithAnimation(context, routes[index]!, index);
+          onItemTapped(index);
+        }
+      },
+    ),
   );
 }
