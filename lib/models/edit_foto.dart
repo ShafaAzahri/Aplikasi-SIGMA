@@ -1,13 +1,18 @@
-class PhotoModel {
-  final String fotoPath;
+class PhotoResponse {
+  final String status;
+  final String message;
 
-  PhotoModel({
-    required this.fotoPath,
+  PhotoResponse({
+    required this.status,
+    required this.message,
   });
 
-  factory PhotoModel.fromJson(Map<String, dynamic> json) {
-    return PhotoModel(
-      fotoPath: json['foto_path'] ?? '',
+  factory PhotoResponse.fromJson(Map<String, dynamic> json) {
+    return PhotoResponse(
+      status: json['status'] ?? 'error',
+      message: json['message'] ?? 'Unknown error occurred',
     );
   }
+
+  bool get isSuccess => status == 'success';
 }

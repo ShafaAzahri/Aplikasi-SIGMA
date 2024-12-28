@@ -22,12 +22,10 @@ void main() async {
   // Check auth saat startup
   final isLoggedIn = await AuthCheck.isLoggedIn();
   if (!isLoggedIn) {
-    // Clear preferences jika tidak terautentikasi
     final prefs = await SharedPreferences.getInstance();
     await prefs.clear();
     print('Cleared preferences - not authenticated');
   }
-  
   runApp(MyApp());
 }
 

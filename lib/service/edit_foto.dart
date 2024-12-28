@@ -1,41 +1,54 @@
-// lib/service/photo_service.dart
-import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:io';
+import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import '../models/edit_foto.dart';
 import 'api_url.dart';
 
 class PhotoService {
-  Future<bool> updateProfilePhoto(File imageFile) async {
+  Future<PhotoResponse> updateProfilePhoto(File photoFile) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final sessionId = prefs.getString('PHPSESSID');
 
-      if (sessionId == null) throw Exception('No active session');
+      if (sessionId == null) {
+        return PhotoResponse(
+          status: 'error',
+          message: 'No active session found',
+        );
+      }
 
-      var request = http.MultipartRequest(
-        'POST',
-        Uri.parse('${AppConfig.apiBaseUrl}/profile.php'),
+      final uri = Uri.parse('${AppConfig.apiBaseUrl}/profile.php');
+      var request = http.MultipartRequest('POST', uri);
+
+      request.headers.addAll({
+        'Cookie': 'PHPSESSID=$sessionId',
+      });
+
+      request.files.add(
+        await http.MultipartFile.fromPath(
+          'profile_picture',
+          photoFile.path,
+        ),
       );
-
-      request.headers['Cookie'] = 'PHPSESSID=$sessionId';
-      
-      request.files.add(await http.MultipartFile.fromPath(
-        'profilePicture',
-        imageFile.path,
-      ));
 
       final streamedResponse = await request.send();
       final response = await http.Response.fromStream(streamedResponse);
 
-      print('Response status: ${response.statusCode}');
-      print('Response body: ${response.body}');
+      if (response.statusCode == 200) {
+        return PhotoResponse.fromJson(jsonDecode(response.body));
+      } else {
+        return PhotoResponse(
+          status: 'error',
+          message: 'Server error: ${response.statusCode}',
+        );
+      }
 
-      final jsonResponse = json.decode(response.body);
-      return jsonResponse['status'] == 'success';
     } catch (e) {
-      print('Error updating photo: $e');
-      throw Exception('Failed to update photo');
+      return PhotoResponse(
+        status: 'error',
+        message: 'Failed to update photo: ${e.toString()}',
+      );
     }
   }
 }

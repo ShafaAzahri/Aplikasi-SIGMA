@@ -132,6 +132,78 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
     );
   }
 
+  void _showFullScreenImage(String imageUrl) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: EdgeInsets.zero,
+          child: Stack(
+            children: [
+              // Gambar dengan gesture detector untuk zoom dan pan
+              GestureDetector(
+                onTap: () => Navigator.pop(context),
+                child: Container(
+                  width: double.infinity,
+                  height: double.infinity,
+                  color: Colors.black87,
+                  child: InteractiveViewer(
+                    minScale: 0.5,
+                    maxScale: 4.0,
+                    child: Image.network(
+                      imageUrl,
+                      fit: BoxFit.contain,
+                      errorBuilder: (context, error, stackTrace) => Center(
+                        child: Icon(
+                          Icons.error_outline,
+                          color: Colors.white,
+                          size: 50,
+                        ),
+                      ),
+                      loadingBuilder: (context, child, loadingProgress) {
+                        if (loadingProgress == null) return child;
+                        return Center(
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            value: loadingProgress.expectedTotalBytes != null
+                                ? loadingProgress.cumulativeBytesLoaded /
+                                loadingProgress.expectedTotalBytes!
+                                : null,
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+              ),
+              // Tombol close
+              Positioned(
+                top: 40,
+                right: 20,
+                child: GestureDetector(
+                  onTap: () => Navigator.pop(context),
+                  child: Container(
+                    padding: EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.black45,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.close,
+                      color: Colors.white,
+                      size: 30,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   Widget _buildProfileHeader(MahasiswaModel profile) {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 24, vertical: 16),
@@ -139,28 +211,36 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
         children: [
           Stack(
             children: [
-              Container(
-                padding: EdgeInsets.all(4),
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(color: deepCream, width: 2),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black12,
-                      blurRadius: 8,
-                      offset: Offset(0, 4),
-                    ),
-                  ],
+              GestureDetector(
+                onTap: () => _showFullScreenImage(
+                  '${AppConfig.assetBaseUrl}/profile/${profile.fotoPath}',
                 ),
-                child: CircleAvatar(
-                  radius: 50,
-                  backgroundColor: deepCream.withOpacity(0.2),
-                  backgroundImage: NetworkImage(
-                    '${AppConfig.assetBaseUrl}/profile/${profile.fotoPath}',
+                child: Container(
+                  padding: EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: deepCream, width: 2),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black12,
+                        blurRadius: 8,
+                        offset: Offset(0, 4),
+                      ),
+                    ],
                   ),
-                  onBackgroundImageError: (e, s) {
-                    print('Error loading profile image: $e');
-                  },
+                  child: Hero(
+                    tag: 'profileImage',
+                    child: CircleAvatar(
+                      radius: 50,
+                      backgroundColor: deepCream.withOpacity(0.2),
+                      backgroundImage: NetworkImage(
+                        '${AppConfig.assetBaseUrl}/profile/${profile.fotoPath}',
+                      ),
+                      onBackgroundImageError: (e, s) {
+                        print('Error loading profile image: $e');
+                      },
+                    ),
+                  ),
                 ),
               ),
               Positioned(
@@ -396,28 +476,149 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
   }
 
   Widget _buildPendingUKMList() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.hourglass_empty,
-            size: 64,
-            color: deepCream.withOpacity(0.5),
-          ),
-          SizedBox(height: 16),
-          Text(
-            'Tidak ada pendaftaran yang sedang diproses',
-            style: TextStyle(
-              fontSize: 16,
-              color: textColor,
-              fontWeight: FontWeight.w500,
+    return FutureBuilder<ProfileResponse>(
+      future: _profileFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Center(
+            child: CircularProgressIndicator(color: accentColor),
+          );
+        }
+
+        if (!snapshot.hasData || snapshot.data!.ukmPendaftaran.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.hourglass_empty,
+                  size: 64,
+                  color: deepCream.withOpacity(0.5),
+                ),
+                SizedBox(height: 16),
+                Text(
+                  'Tidak ada pendaftaran yang sedang diproses',
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: textColor,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
             ),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
+          );
+        }
+
+        return ListView.builder(
+          padding: EdgeInsets.all(16),
+          itemCount: snapshot.data!.ukmPendaftaran.length,
+          itemBuilder: (context, index) {
+            final ukm = snapshot.data!.ukmPendaftaran[index];
+            return Card(
+              margin: EdgeInsets.only(bottom: 12),
+              elevation: 2,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Padding(
+                padding: EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 60,
+                      height: 60,
+                      decoration: BoxDecoration(
+                        color: deepCream.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: Image.network(
+                          '${AppConfig.assetBaseUrl}/${ukm.logoUkm}',
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) =>
+                              Icon(Icons.image_not_supported, color: deepCream),
+                        ),
+                      ),
+                    ),
+                    SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            ukm.namaUkm,
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: accentColor,
+                            ),
+                          ),
+                          SizedBox(height: 8),
+                          Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: _getPendingStatusColor(ukm.status).withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              _getStatusText(ukm.status),
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: _getPendingStatusColor(ukm.status),
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
+  }
+
+  Color _getPendingStatusColor(String status) {
+    switch (status.toUpperCase()) {
+      case 'PENDING_TAHAP1':
+      case 'PENDING_TAHAP2':
+      case 'PENDING_TAHAP3':
+        return Colors.orange;
+      case 'ACC_TAHAP1':
+      case 'ACC_TAHAP2':
+      case 'ACC_TAHAP3':
+        return Colors.green;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  String _getStatusText(String status) {
+    switch (status.toUpperCase()) {
+      case 'PENDING_TAHAP1':
+        return 'Menunggu Konfirmasi Tahap 1';
+      case 'ACC_TAHAP1':
+        return 'Diterima Tahap 1';
+      case 'PENDING_TAHAP2':
+        return 'Menunggu Konfirmasi Tahap 2';
+      case 'ACC_TAHAP2':
+        return 'Diterima Tahap 2';
+      case 'PENDING_TAHAP3':
+        return 'Menunggu Konfirmasi Tahap 3';
+      case 'ACC_TAHAP3':
+        return 'Diterima Tahap 3';
+      default:
+        return status;
+    }
   }
 
   Widget _buildLogoutButton() {
@@ -513,10 +714,27 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
       final XFile? image = await picker.pickImage(source: source);
 
       if (image != null) {
-        final success = await photoService.updateProfilePhoto(File(image.path));
+        final file = File(image.path);
 
-        if (success) {
-          Navigator.pop(context); // Close bottom sheet
+        // Show loading
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => const Center(
+            child: CircularProgressIndicator(),
+          ),
+        );
+
+        // Upload foto
+        final response = await photoService.updateProfilePhoto(file);
+
+        // Hide loading
+        Navigator.pop(context);
+
+        if (response.isSuccess) {
+          Navigator.of(context).pop(); // Close bottom sheet
+
+          // Refresh profile
           setState(() {
             _profileFuture = _profileService.getMahasiswaProfile();
           });
@@ -525,25 +743,23 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
             SnackBar(
               content: Text('Foto profil berhasil diperbarui'),
               backgroundColor: Colors.green,
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-              margin: EdgeInsets.all(10),
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(response.message),
+              backgroundColor: Colors.red,
             ),
           );
         }
       }
     } catch (e) {
+      Navigator.pop(context); // Hide loading
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Gagal mengupdate foto: $e'),
+          content: Text('Gagal memproses foto: $e'),
           backgroundColor: Colors.red,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
-          margin: EdgeInsets.all(10),
         ),
       );
     }

@@ -4,6 +4,12 @@ import 'dart:io';
 import 'package:latihan/service/form3.dart';
 import 'package:path/path.dart' as path;
 
+// Constants
+const Color primaryColor = Color(0xFFFFF8DC);    // Cream background
+const Color secondaryColor = Color(0xFFDEB887);  // BurlyWood
+const Color accentColor = Color(0xFF8B4513);     // SaddleBrown
+const Color textColor = Color(0xFF4A4A4A);       // Dark gray
+
 class RegistrationStep3Page extends StatefulWidget {
   final String ukmId;
   final String ukmName;
@@ -21,7 +27,7 @@ class RegistrationStep3Page extends StatefulWidget {
 class _RegistrationStep3PageState extends State<RegistrationStep3Page> {
   final _submitService = SubmitTahap3Service();
   bool _isLoading = false;
-  
+
   // File state variables
   File? ktmFile;
   File? khsFile;
@@ -33,210 +39,6 @@ class _RegistrationStep3PageState extends State<RegistrationStep3Page> {
   String? khsFileName;
   String? cvFileName;
   String? motivationLetterFileName;
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Pendaftaran ${widget.ukmName}'),
-        backgroundColor: Color(0xFF161D6F),
-      ),
-      body: Stack(
-        children: [
-          SingleChildScrollView(
-            child: Container(
-              padding: EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildProgressBar(),
-                  SizedBox(height: 24),
-                  _buildFormCard(),
-                ],
-              ),
-            ),
-          ),
-          if (_isLoading)
-            Container(
-              color: Colors.black.withOpacity(0.5),
-              child: Center(
-                child: CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildProgressBar() {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 16),
-      child: Row(
-        children: [
-          _buildProgressStep(1, 'TAHAP 1', false),
-          Expanded(child: _buildProgressLine(true)),
-          _buildProgressStep(2, 'TAHAP 2', false),
-          Expanded(child: _buildProgressLine(true)),
-          _buildProgressStep(3, 'TAHAP 3', true),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildProgressStep(int step, String label, bool isActive) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 24,
-          height: 24,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: isActive ? Color(0xFF161D6F) : Colors.white,
-            border: Border.all(
-              color: isActive ? Color(0xFF161D6F) : Colors.grey,
-              width: 2,
-            ),
-          ),
-        ),
-        SizedBox(height: 4),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            color: isActive ? Color(0xFF161D6F) : Colors.grey,
-            fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildProgressLine(bool isActive) {
-    return Container(
-      height: 2,
-      color: isActive ? Color(0xFF161D6F) : Colors.grey[300],
-    );
-  }
-
-  Widget _buildFormCard() {
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Container(
-        padding: EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Formulir Pendaftaran Tahap Ketiga',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF161D6F),
-              ),
-            ),
-            SizedBox(height: 24),
-            _buildFileField(
-              'Scan KTM atau identitas lainnya',
-              'Format: PDF/JPG/PNG, Maks: 2MB',
-              ktmFileName,
-              () => _pickFile('ktm'),
-            ),
-            _buildFileField(
-              'Scan KHS',
-              'Format: PDF/JPG/PNG, Maks: 2MB',
-              khsFileName,
-              () => _pickFile('khs'),
-            ),
-            _buildFileField(
-              'CV',
-              'Format: PDF, Maks: 2MB',
-              cvFileName,
-              () => _pickFile('cv'),
-            ),
-            _buildFileField(
-              'Motivation Letter',
-              'Format: PDF, Maks: 2MB',
-              motivationLetterFileName,
-              () => _pickFile('motivation'),
-            ),
-            SizedBox(height: 24),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                ElevatedButton(
-                  onPressed: () => Navigator.pop(context),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.grey,
-                    padding: EdgeInsets.symmetric(horizontal: 32, vertical: 12),
-                  ),
-                  child: Text('Kembali'),
-                ),
-                SizedBox(width: 16),
-                ElevatedButton(
-                  onPressed: _isLoading ? null : _submitForm,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(0xFF161D6F),
-                    padding: EdgeInsets.symmetric(horizontal: 32, vertical: 12),
-                  ),
-                  child: _isLoading
-                      ? SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 2,
-                          ),
-                        )
-                      : Text('Submit'),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildFileField(
-    String label,
-    String format,
-    String? selectedFile,
-    VoidCallback onPick,
-  ) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(label),
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  selectedFile ?? format,
-                  style: TextStyle(
-                    color: selectedFile != null ? Colors.black : Colors.grey,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              IconButton(
-                icon: Icon(Icons.file_upload),
-                onPressed: onPick,
-              ),
-            ],
-          ),
-          Divider(),
-        ],
-      ),
-    );
-  }
 
   Future<void> _pickFile(String type) async {
     try {
@@ -255,13 +57,6 @@ class _RegistrationStep3PageState extends State<RegistrationStep3Page> {
       if (result != null) {
         File file = File(result.files.single.path!);
         String fileName = result.files.single.name;
-
-        // Debug print
-        print('Picked file for $type:');
-        print('Path: ${file.path}');
-        print('Name: $fileName');
-        print('Size: ${await file.length()} bytes');
-        print('Extension: ${path.extension(fileName)}');
 
         setState(() {
           switch (type) {
@@ -285,7 +80,6 @@ class _RegistrationStep3PageState extends State<RegistrationStep3Page> {
         });
       }
     } catch (e) {
-      print('Error picking file: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error memilih file: $e')),
       );
@@ -293,10 +87,7 @@ class _RegistrationStep3PageState extends State<RegistrationStep3Page> {
   }
 
   Future<void> _submitForm() async {
-    if (ktmFile == null || 
-        khsFile == null || 
-        cvFile == null || 
-        motivationLetter == null) {
+    if (ktmFile == null || khsFile == null || cvFile == null || motivationLetter == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Semua dokumen harus diupload')),
       );
@@ -319,35 +110,79 @@ class _RegistrationStep3PageState extends State<RegistrationStep3Page> {
           context: context,
           barrierDismissible: false,
           builder: (BuildContext context) {
-            return AlertDialog(
-              title: Text('Sukses'),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.check_circle,
-                    color: Colors.green,
-                    size: 50,
-                  ),
-                  SizedBox(height: 16),
-                  Text(response.message),
-                ],
+            return Dialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
               ),
-              actions: [
-                TextButton(
-                  child: Text('OK'),
-                  onPressed: () {
-                    Navigator.of(context).pop(); // Tutup dialog
-                    Navigator.of(context).pushReplacementNamed(
-                      '/registration_status',
-                      arguments: {
-                        'idUkm': widget.ukmId,
-                        'ukmName': widget.ukmName,
-                      },
-                    );
-                  },
+              child: Padding(
+                padding: EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.green.withOpacity(0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.check_circle,
+                        color: Colors.green,
+                        size: 64,
+                      ),
+                    ),
+                    SizedBox(height: 24),
+                    Text(
+                      'Sukses!',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: accentColor,
+                      ),
+                    ),
+                    SizedBox(height: 8),
+                    Text(
+                      'Pendaftaran tahap 3 berhasil dilakukan',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: textColor,
+                      ),
+                    ),
+                    SizedBox(height: 24),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                          Navigator.of(context).pushReplacementNamed(
+                            '/registration_status',
+                            arguments: {
+                              'idUkm': widget.ukmId,
+                              'ukmName': widget.ukmName,
+                            },
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: accentColor,
+                          padding: EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: Text(
+                          'OK',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             );
           },
         );
@@ -363,5 +198,306 @@ class _RegistrationStep3PageState extends State<RegistrationStep3Page> {
     } finally {
       setState(() => _isLoading = false);
     }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: primaryColor,
+      appBar: AppBar(
+        elevation: 0,
+        backgroundColor: primaryColor,
+        title: Text(
+          'Pendaftaran ${widget.ukmName}',
+          style: TextStyle(
+            color: accentColor,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        iconTheme: IconThemeData(color: accentColor),
+      ),
+      body: Stack(
+        children: [
+          SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildProgressBar(),
+                Padding(
+                  padding: EdgeInsets.all(16),
+                  child: Card(
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    color: Colors.white,
+                    child: Padding(
+                      padding: EdgeInsets.all(24),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Formulir Pendaftaran Tahap Ketiga',
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: accentColor,
+                            ),
+                          ),
+                          SizedBox(height: 24),
+                          _buildDocumentSection(),
+                          SizedBox(height: 24),
+                          _buildSubmitButton(),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (_isLoading)
+            Container(
+              color: Colors.black.withOpacity(0.5),
+              child: Center(
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProgressBar() {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+      child: Row(
+        children: [
+          _buildProgressStep(1, 'TAHAP 1', false),
+          Expanded(child: _buildProgressLine(true)),
+          _buildProgressStep(2, 'TAHAP 2', false),
+          Expanded(child: _buildProgressLine(true)),
+          _buildProgressStep(3, 'TAHAP 3', true),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProgressStep(int step, String label, bool isActive) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 36,
+          height: 36,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: isActive ? accentColor : Colors.white,
+            border: Border.all(
+              color: isActive ? accentColor : secondaryColor,
+              width: 2,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: isActive
+                    ? accentColor.withOpacity(0.2)
+                    : Colors.black.withOpacity(0.05),
+                blurRadius: 8,
+                offset: Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Center(
+            child: Text(
+              '$step',
+              style: TextStyle(
+                color: isActive ? Colors.white : secondaryColor,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ),
+        SizedBox(height: 8),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            color: isActive ? accentColor : secondaryColor,
+            fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildProgressLine(bool isActive) {
+    return Container(
+      height: 2,
+      color: isActive ? accentColor : secondaryColor.withOpacity(0.3),
+    );
+  }
+
+  Widget _buildDocumentSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+      Text(
+      'Dokumen Persyaratan',
+      style: TextStyle(
+        fontSize: 18,
+        fontWeight: FontWeight.bold,
+        color: accentColor,
+      ),
+    ),
+    SizedBox(height: 16),
+    _buildFileField(
+    'Scan KTM atau identitas lainnya',
+    'Format: PDF/JPG/PNG, Maks: 2MB',
+    ktmFileName,
+    () => _pickFile('ktm'),
+    ),
+    SizedBox(height: 16),
+    _buildFileField(
+    'Scan KHS',
+    'Format: PDF/JPG/PNG, Maks: 2MB',
+    khsFileName,
+    () => _pickFile('khs'),
+    ),
+        SizedBox(height: 16),
+        _buildFileField(
+          'CV',
+          'Format: PDF, Maks: 2MB',
+          cvFileName,
+              () => _pickFile('cv'),
+        ),
+        SizedBox(height: 16),
+        _buildFileField(
+          'Motivation Letter',
+          'Format: PDF, Maks: 2MB',
+          motivationLetterFileName,
+              () => _pickFile('motivation'),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFileField(
+      String label,
+      String format,
+      String? selectedFile,
+      VoidCallback onPick,
+      ) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: secondaryColor.withOpacity(0.3)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              label,
+              style: TextStyle(
+                color: accentColor.withOpacity(0.7),
+                fontSize: 14,
+              ),
+            ),
+            SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    selectedFile ?? format,
+                    style: TextStyle(
+                      color: selectedFile != null ? textColor : Colors.grey,
+                      fontSize: 16,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                Container(
+                  decoration: BoxDecoration(
+                    color: accentColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: IconButton(
+                    icon: Icon(
+                      Icons.upload_file_rounded,
+                      color: accentColor,
+                    ),
+                    onPressed: onPick,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSubmitButton() {
+    return Container(
+      width: double.infinity,
+      height: 56,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            accentColor,
+            accentColor.withOpacity(0.8),
+          ],
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+        ),
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: accentColor.withOpacity(0.3),
+            blurRadius: 8,
+            offset: Offset(0, 4),
+          ),
+        ],
+      ),
+      child: ElevatedButton(
+        onPressed: _isLoading ? null : _submitForm,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.transparent,
+          shadowColor: Colors.transparent,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+        child: _isLoading
+            ? SizedBox(
+          width: 24,
+          height: 24,
+          child: CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+            strokeWidth: 2,
+          ),
+        )
+            : Text(
+          'Submit',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 1,
+            color: Colors.white,
+          ),
+        ),
+      ),
+    );
   }
 }
